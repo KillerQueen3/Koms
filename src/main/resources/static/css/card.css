@@ -1,0 +1,40 @@
+.left-div {
+    left: 0;
+    width: 30%;
+    border-right: 1px solid darkcyan;
+    box-shadow: 0 0 15px lightgray;
+    background-color: #ebfcff;
+    opacity: 0.8;
+}
+
+.content-div {
+    padding-left: 10px;
+    left: 30%;
+    width: calc(70% - 10px);
+}
+
+.fixed-div {
+    position: fixed;
+    top: 0;
+    padding-top: 50px;
+    height: calc(100% - 50px);
+    overflow-y: auto;
+}
+
+.card {
+    break-inside: avoid;
+    padding: 10px;
+    margin: 15px;
+    border: #3bff9b solid 1px;
+    width: calc(100% - 50px);
+    border-radius: 10px;
+    box-shadow: 0 0 10px lightgray;;
+    background-color: white;
+}
+
+.card h3 {
+    padding: 0 0 10px 0;
+    margin: 0;
+    line-height: 100%;
+    font-size: 23px;
+}

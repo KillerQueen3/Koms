@@ -1,0 +1,7 @@
+requests>=2.0
+requests_toolbelt>=0.9.1
+cloudscraper>=1.0
+
+Flask~=1.1.2
+setuptools~=41.2.0
+tenacity~=6.3.0

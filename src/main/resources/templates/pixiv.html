@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Pixiv-KOMS</title>
+    <link rel="stylesheet" type="text/css" href="/css/header.css">
+    <link rel="stylesheet" type="text/css" href="/css/pixiv.css">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body onload="init()">
+    <div th:replace="~{commonality/header::topbar}"></div>
+    <div class="body-div">
+        <div class="image-father">
+            <div class="spinner image" id="load">
+                <div class="spinner-container container1">
+                    <div class="circle1"></div>
+                    <div class="circle2"></div>
+                    <div class="circle3"></div>
+                    <div class="circle4"></div>
+                </div>
+                <div class="spinner-container container2">
+                    <div class="circle1"></div>
+                    <div class="circle2"></div>
+                    <div class="circle3"></div>
+                    <div class="circle4"></div>
+                </div>
+                <div class="spinner-container container3">
+                    <div class="circle1"></div>
+                    <div class="circle2"></div>
+                    <div class="circle3"></div>
+                    <div class="circle4"></div>
+                </div>
+            </div>
+            <div class="image" id="image-div">
+                <button class="page-btn" id="left" onclick="leftImg()">&nbsp;&nbsp;&lt;</button>
+                <img alt="image" src="" id="image-preview">
+                <button class="page-btn" id="right" onclick="rightImg()">&gt;&nbsp;&nbsp;</button>
+            </div>
+        </div>
+
+        <div class="control">
+            <div class="admin-div" sec:authorize="hasAnyAuthority('AUTH_ADMIN', 'AUTH_SUPER_ADMIN')">管理员</div>
+            <div class="search-div">
+                <div class="search-box">
+                    <label for="search-text"></label><input id="search-text" type="text" placeholder="在这里输入关键词或id">
+                    <button class="img-btn" onclick="search()">搜索</button>
+                </div>
+                <label for="pid-search"><input id="pid-search" type="radio" value="pid" name="type">pid搜索</label>
+                <label for="author-search"><input id="author-search" type="radio" value="author" name="type">uid搜索</label>
+                <label for="keyword-search"><input id="keyword-search" type="radio" value="keyword" name="type" checked>tag搜索</label>
+                &nbsp;&nbsp;&nbsp;&nbsp;<label for="search-r18" sec:authorize="isAuthenticated()"><input id="search-r18" type="checkbox" >仅R-18(tag)</label>
+                <br><button class="img-btn" onclick="lolicon()">随机</button>
+                <button class="img-btn" onclick="recommend()">推荐</button>
+                <button class="img-btn" onclick="before()">回退</button> <br>
+            </div>
+            <div class="image-info">
+                <span id="title" class="info">标题</span><br>
+                <span id="author" class="info">作者</span><br>
+                <div id="tags"><span class="tag" title="标签">标签</span></div>
+            </div>
+        </div>
+
+    </div>
+
+<script th:inline="javascript">
+    let load = document.getElementById("load")
+    let img = document.getElementById("image-preview")
+    let kw = document.getElementById("search-text")
+    let search_r18 = document.getElementById("search-r18")
+    let author = document.getElementById("author")
+    let img_div = document.getElementById("image-div")
+    let left = document.getElementById("left")
+    let right = document.getElementById("right")
+    let cur_img = null
+    let cur_p = 0
+    let history = []
+    let param = [[${param}]]
+
+    function init() {
+        if (param.type === undefined || param.type.length === 0 || param.thing === undefined || param.thing.length === 0) {
+            recommend()
+        }
+        let thing = param.thing[0]
+        kw.value = thing
+        console.log(param.type)
+        switch (param.type[0]) {
+            case "search":
+                document.getElementById("keyword-search").checked = true
+                searchByKw()
+                break
+            case "id":
+                document.getElementById("pid-search").checked = true
+                searchByPid()
+                break
+            case "uid":
+                document.getElementById("author-search").checked = true
+                searchByUid()
+                break
+            default:
+                recommend()
+        }
+    }
+
+    img.onload = function () {
+        img_div.hidden = false
+        load.hidden = true
+        img.hidden = false
+    }
+
+    $('#image-preview').on("load", function () {
+        $(this).attr("retry", 0)
+    })
+
+    $("#image-preview").on("error", function () {
+        const _this = $(this)
+
+        let retry = _this.attr("retry");
+        console.log(retry)
+        setTimeout(function () {
+            if(retry<7 || retry === undefined) {
+                if (retry === undefined) retry = 0
+                retry++;
+                _this.attr("retry", retry);//重试次数+1
+                _this.attr('src', _this.attr("src"));//继续刷新图片
+            } else {
+                alert("图片加载失败！")
+            }
+        },3000)
+    })
+
+    function recommend() {
+        img.onclick = recommend
+        getRandomSetu(true)
+    }
+
+    function lolicon() {
+        img.onclick = lolicon
+        getRandomSetu()
+    }
+
+    function getRandomSetu(recommend = false) {
+        let form = new XMLHttpRequest()
+        if (recommend) {
+            form.open("get", "/pixiv/recommend")
+        } else {
+            form.open("get", "/pixiv/random")
+        }
+        img_div.hidden = true
+        load.hidden = false
+        form.send()
+        form.onload = function () {
+            if (form.status === 200) {
+                let json = JSON.parse(form.responseText)
+                if (json.pid < 0) {
+                    img_div.hidden = false
+                    load.hidden = true
+                    alert("失败！")
+                    return
+                }
+                previewImg(json)
+            } else {
+                console.log("ERROR!" + form.responseText)
+            }
+        }
+    }
+
+    (function enter() {
+            $("#search-text").keypress(function (event) {
+                if (event.which === 13) {
+                    search()
+                }
+            });
+        }
+    )();
+
+    function search() {
+        if (document.getElementById("pid-search").checked) {
+            searchByPid()
+        } else if (document.getElementById("author-search").checked) {
+            searchByUid()
+        } else {
+            searchByKw()
+        }
+    }
+
+    function searchByUid() {
+        let uid = kw.value
+        if (!/\d+/.test(uid)) {
+            alert("uid格式错误！")
+            return
+        }
+        let xhr = new XMLHttpRequest()
+        xhr.open("get", "/pixiv/artist?uid=" + uid)
+        searchXHR(xhr)
+        img.onclick = searchByUid
+    }
+
+    function searchByPid() {
+        let pid = kw.value
+        if (!/\d+/.test(pid)) {
+            alert("pid格式错误！")
+            return
+        }
+        let xhr = new XMLHttpRequest()
+        xhr.open("get", "/pixiv/pid?pid=" + pid)
+        searchXHR(xhr)
+        img.onclick = null
+    }
+
+    function searchXHR(xhr) {
+        xhr.send()
+        img_div.hidden = true
+        load.hidden = false
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                let json = JSON.parse(xhr.responseText)
+                if (json.pid < 0) {
+                    alert("搜索失败！")
+                    img_div.hidden = false
+                    load.hidden = true
+                } else {
+                    previewImg(json)
+                }
+            } else {
+                console.log("ERROR!" + xhr.responseText)
+            }
+        }
+    }
+
+    function searchByKw() {
+        let tag = kw.value
+        if (tag.length === 0) {
+            alert("请输入关键词！")
+            return
+        }
+        let r
+        if (search_r18 === null) r = false
+        else r = search_r18.checked
+        let xhr = new XMLHttpRequest()
+        xhr.open("get", "/pixiv/search?keyword=" + tag + "&r18=" + r)
+        searchXHR(xhr)
+        img.onclick = searchByKw
+    }
+
+    function before() {
+        if (history.length === 0) {
+            return
+        }
+        img_div.hidden = true
+        load.hidden = false
+        let b = history.pop()
+        previewImg(b, false)
+    }
+
+    function leftImg() {
+        if (cur_p > 0) {
+            load.hidden = false
+            img.hidden = true
+            cur_p -= 1
+            img.src = img.src.replaceAll("_p" + (cur_p+1).toString(), "_p" + cur_p.toString())
+            document.getElementById("title").getElementsByTagName("a")[0].href = cur_img.originalUrl.replaceAll("_p0", "_p" + cur_p.toString())
+            if (cur_p === 0) {
+                left.hidden = true
+            }
+            if (cur_p + 1 < cur_img.p) {
+                right.hidden = false
+            }
+        }
+    }
+
+    function rightImg() {
+        if (cur_p + 1 < cur_img.p) {
+            cur_p += 1
+            load.hidden = false
+            img.hidden = true
+            img.src = img.src.replaceAll("_p" + (cur_p-1).toString(), "_p" + cur_p.toString())
+            document.getElementById("title").getElementsByTagName("a")[0].href = cur_img.originalUrl.replaceAll("_p0", "_p" + cur_p.toString())
+            if (cur_p + 1 === cur_img.p) {
+                right.hidden = true
+            }
+            if (cur_p > 0) {
+                left.hidden = false
+            }
+        }
+    }
+
+    function previewImg(json, push = true) {
+        if (push && cur_img!=null) {
+            history.push(cur_img)
+        }
+        cur_img = json
+
+        cur_p = 0
+        left.hidden = true
+        right.hidden = json.p <= 1;
+
+        img.src = json.url
+        document.getElementById("title").innerHTML =  "<a href=\"" + json.originalUrl + "\" target='_blank' title='" + json.pid + "'>" + json.title + "</a>"
+        author.innerHTML = "<span title=\"uid: " + json.uid + "\">" + json.author + "</span>"
+        author.onclick = function () {
+            kw.value = json.uid
+            document.getElementById("author-search").checked = true
+            searchByUid()
+        }
+
+        getTags(json.tagStr)
+    }
+
+    function getTags(tagStr) {
+        let ts = tagStr.split(",")
+        let i
+        let tags = $("#tags")
+        tags.empty()
+        for ( i=0; i <ts.length-1; i+=2) {
+            let trans = ts[i+1]
+            if (trans.length === 0) {
+                trans = ts[i]
+            }
+            let span = $("<span class='tag' title=\"" + trans + "\" onclick='tagSearch(this)'>" + ts[i] + "</span>")
+            if (ts[i] === "R-18") {
+                span.css({"color": "red"})
+            }
+            if (ts[i] === "ロリ" || ts[i] === "幼女") {
+                span.css({"-webkit-animation": "rainbow 7s infinite",
+                        "animation": "rainbow 7s infinite"})
+            }
+            tags.append(span)
+
+        }
+
+    }
+
+    function tagSearch(tag) {
+        kw.value = tag.innerHTML
+        document.getElementById("keyword-search").checked = true
+        searchByKw()
+    }
+</script>
+</body>
+</html>

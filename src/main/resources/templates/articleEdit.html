@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh"  xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="/css/header.css">
+    <link rel="stylesheet" type="text/css" href="/css/commonality.css">
+    <link rel="stylesheet" type="text/css" href="/css/article.css">
+    <title>文章编辑</title>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <style>
+        .article-class {
+            width: 98%;
+
+        }
+
+        #show-article-div img {
+            max-width: 100%;
+        }
+
+        body {
+            background-image: url("/img/fishnets-and-hearts.png");
+        }
+
+    </style>
+</head>
+<body onload="showPreview()">
+<div th:replace="~{commonality/header::topbar}"></div>
+<div class="body-div">
+<div style="height: 100%">
+    <span id="article-id" th:text="${article?.id}" hidden></span>
+    <table style="width: 100%;table-layout: fixed;padding: 0">
+        <tr>
+            <td valign="top">
+                <input id="input-title" style="width: 48%;" th:value="${article?.title}" type="text" placeholder="标题">
+                <input id="input-tags" style="width: 48%;" th:value="${article?.tagS}" type="text" placeholder="标签">
+
+                <textarea th:utext="${article?.html}" class="article-class" style="margin-top: 10px;resize: none;height: 565px" id="edit-article-ta" onchange="showPreview()"></textarea>
+            </td>
+            <td valign="top">    <div style="border: #3bff9b 1px solid;height: 600px;overflow-y: auto" class="article-class" id="show-article-div">预览</div></td>
+        </tr>
+    </table>
+
+    <input id="upload-image" type="file"  accept="image/pipeg,image/jpeg,image/png,image/gif" onchange="uploadImage(this)" hidden/>
+    <label for="upload-image" class="confirm-btn">上传图片</label>
+    <input id="upload-input" type="file"  accept=".txt,.html" onchange="upload_file(this)" hidden/>
+    <label for="upload-input" class="confirm-btn" title="上传一个文本文件，将其中内容作为文章内容。">上传文本</label>
+    <button th:if="${edit}" onclick="editArticle()" class="confirm-btn">提交</button> <!--编辑提交-->
+    <button th:if="${!edit}" onclick="editArticle(true)" class="confirm-btn">提交</button> <!--新的提交-->
+
+
+</div>
+</div>
+</body>
+<script th:inline="javascript">
+    const token = [[${_csrf.token}]]
+    const header = [[${_csrf.headerName}]]
+
+    function showPreview() {
+        $("#show-article-div").html($("#edit-article-ta").val())
+    }
+
+    $(function(){
+        $.fn.extend({
+            insertContent: function(str){
+                const spos = $(this)[0].selectionStart;
+                const epos = $(this)[0].selectionEnd;
+                const oval = $(this).val();
+                $(this).val(oval.substring(0,spos)+str+oval.substring(epos,oval.length));
+                $(this)[0].setSelectionRange(spos+str.length,spos+str.length);
+            },
+        });
+    });
+
+    function getSimple() {
+        let title = $("#input-title").val()
+        let tags = $("#input-tags").val()
+        let html = $("#edit-article-ta").val()
+        if (title === null || tags === null || html === null || title.length === 0 || tags.length === 0 || html.length===0) {
+            alert("存在未填项！")
+            return null
+        }
+        let id = $("#article-id").text()
+        if (id.length === 0)
+            id = null
+        return {
+            id: id,
+            title: title,
+            html: html,
+            tags: tags
+        }
+    }
+
+    function editArticle(isNew = false) {
+        let thing = getSimple()
+        if (thing === null) return
+        console.log(thing)
+        let url = isNew ? "/article/edit/create" : "/article/edit/edit"
+        $.ajax({
+            url: url,
+            type: "post",
+            data: JSON.stringify(thing),
+            contentType: "application/json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader(header, token)
+            },
+            error: function (XMLHttpRequest) {
+
+                alert(XMLHttpRequest.responseJSON.msg)
+            },
+            success:function(data){
+                if (data.code === 200) {
+                    alert("成功！")
+                    if (isNew) {
+                        window.location.href = "/article/read/" + data.msg
+                    } else  {
+                        window.location.href = "/article/read/" + [[${article?.id}]]
+                    }
+                } else {
+                    alert(data.msg)
+                }
+            }
+        })
+    }
+
+    function upload_file(input) {
+        let file = input.files[0]
+        if (file === null)return
+        let reader = new FileReader()
+        reader.onload = function () {
+            if (reader.result) {
+                $("#edit-article-ta").val(reader.result)
+                showPreview()
+            }
+        }
+        reader.readAsText(file)
+    }
+
+    function uploadImage(input) {
+        let file = input.files[0]
+        if (file === null) return
+        let data = new FormData()
+        data.append("file", file)
+        $.ajax({
+            url: "/article/edit/uploadImage",
+            type: "post",
+            data: data,
+            contentType: false,
+            processData: false,
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader(header, token)
+            },
+            error: function (XMLHttpRequest) {
+                alert(XMLHttpRequest.responseJSON.msg)
+            },
+            success:function(data){
+                if (data.code === 200) {
+                    $("#edit-article-ta").insertContent("<img src='" + data.msg + "'>")
+                    showPreview()
+                } else {
+                    alert(data.msg)
+                }
+            }
+        })
+    }
+
+</script>
+</html>

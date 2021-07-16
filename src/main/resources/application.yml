@@ -1,0 +1,20 @@
+server:
+  port: 8081
+
+logging:
+  pattern:
+    file: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %level %logger - %msg%n'
+  file:
+    path: ./log
+  charset:
+    file: utf8
+    console: utf8
+spring:
+  thymeleaf:
+    cache: false
+  mvc:
+    static-path-pattern: /resources/static/**
+  security:
+    user:
+      name: user
+      password: pw

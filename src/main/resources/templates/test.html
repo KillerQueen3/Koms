@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>测试用</title>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/header.css">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+    <style type="text/css">
+
+
+    </style>
+</head>
+<body>
+
+<div>
+    <button onclick="connection.send('12345')">22222222222222</button>
+</div>
+<script>
+    var connection = new WebSocket('ws://127.0.0.1:88/ws');
+
+    connection.onopen = function () {
+        console.log("success")
+        connection.send("test")
+    }
+
+    connection.onmessage = function (msg) {
+        console.log(msg.data)
+    }
+</script>
+</body>
+</html>

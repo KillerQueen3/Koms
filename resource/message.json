@@ -1,0 +1,20 @@
+{
+  "offenseReply": "[at]？",
+  "offense": "废|爬|爪巴|垃圾|傻|逼|弱|没|蠢",
+  "requireImageReply": "[at]在找了，在找了",
+  "sendImageFailed": "发送失败：",
+  "recommendReply": "[at]在推了，在推了",
+  "moreImageReply": "[at]在色了，在色了",
+  "noMoreImageError": "没图可发了。可使用“重置记录[关键词]”重置搜索历史。",
+  "apiError": "接口错误！",
+  "timeOutError": "超时。",
+  "noSearchResult": "找不到。",
+  "unknownError": "未知错误。",
+  "noArtistIllust": "用户id不存在或该用户没有作品。",
+  "noSuchIllust": "没有相关作品或作品已删除。",
+  "noSingleImage": "没有单图可以发。",
+  "noPureImage": "没有健全的图片了。",
+  "bannedTags": "男同-基佬-gay-搞基",
+  "ImNotBot": "我不是机器人-你不会真的以为我是机器人吧-哪有什么机器人，都是人假扮的",
+  "ImNotBotTrigger": "成精-自动-自己-进化"
+}

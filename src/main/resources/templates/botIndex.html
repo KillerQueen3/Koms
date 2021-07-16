@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" >
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="never">
+    <title>bot主页</title>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/header.css">
+    <link rel="stylesheet" type="text/css" href="/css/card.css">
+    <link rel="stylesheet" type="text/css" href="/css/commonality.css">
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 0;
+            background-color: transparent;
+        }
+
+        table.beautiful-table-x {
+            text-align: center;
+            width: 100%;
+        }
+
+        table.beautiful-table-x thead {
+            color: white;
+            background-color: #38F;
+        }
+
+        table.beautiful-table-x tbody tr:nth-of-type(odd) {
+            background: #EEE;
+        }
+
+        table.beautiful-table-x tbody tr:nth-of-type(even) {
+            background: #FFF;
+        }
+
+        .scroll-table tbody {
+            display: block;
+            height: 500px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .scroll-table thead tr, .scroll-table tbody tr {
+            box-sizing: border-box;
+            table-layout: fixed;
+            display: table;
+            padding: 5px;
+            width: 100%;
+        }
+
+        #group-table th, #group-table td {
+            padding: 5px;
+        }
+
+        .scroll-table thead {
+            max-height: 35px;
+        }
+
+        .scroll-table {
+            height: 550px;
+            width: 100%;
+        }
+
+        .avatar-img {
+            max-width: 35px;
+            max-height: 35px;
+        }
+
+        #message-table thead th:nth-child(1), #message-table tbody td:nth-child(1) {
+            width: 10%;
+        }
+
+        #message-table thead th:nth-child(2), #message-table tbody td:nth-child(2) {
+            width: 80%;
+        }
+
+        #message-table thead th:nth-child(3), #message-table tbody td:nth-child(3) {
+            width: 10%;
+        }
+
+        #message-table tbody td:nth-child(2) {
+            text-align: left;
+        }
+
+        #member-table thead th:nth-child(1), #member-table tbody td:nth-child(1) {
+            width: 7%;
+        }
+
+        #member-table thead th:nth-child(2), #member-table tbody td:nth-child(2) {
+            width: 13%;
+        }
+
+        #member-table thead th:nth-child(3), .member-table tbody td:nth-child(3) {
+            width: 40%;
+        }
+
+        #member-table thead th:nth-child(4), #member-table tbody td:nth-child(4) {
+            width: 40%;
+        }
+
+        #lastMessage {
+            white-space: pre-line;
+            display: block;
+            position: relative;
+            border: 1px green dashed;
+            top: 5px;
+            line-height: 150%;
+            font-size: 20px;
+        }
+
+
+        .hidden-img img {
+            display: none;
+            z-index: 999;
+            position: absolute;
+            max-width: 500px;
+            max-height: 300px;
+            box-shadow: 0 0 15px lightgray;
+        }
+
+        .hidden-img:hover img {
+            display: block;
+        }
+
+        #image-preview {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #log {
+            font-size: 25px;
+            line-height: 180%;
+        }
+
+        #image-upload-control-div {
+            line-height: 180%;
+        }
+
+        #send-text-area {
+            resize: none;
+            width: 50%;
+            height: 200px;
+        }
+
+        .paste-input {
+            color: transparent;
+            text-shadow: 0 0 0 #000;
+            border: none;
+        }
+
+        .paste-input:focus {
+            outline: none;
+        }
+
+        body {
+            background-image: url("/img/double-bubble-outline.png");
+        }
+    </style>
+
+</head>
+<body>
+    <div th:replace="~{commonality/header::topbar}"></div>
+
+    <div class="body-div">
+        <div class="fixed-div left-div">
+            <div class="card" th:if="${!ready}"><h3>BOT未登录！</h3></div>
+            <div class="card" th:if="${ready}">
+                <h3>Bot信息</h3>
+                <div class="card-content">
+                    QQ：<span th:text="${id!=null?id:''}"></span><br>
+                    昵称：<span th:text="${nick!=null?nick:''}"></span><br>
+                    <span title="自BOT启动至今的时间">启动时间</span>：<span th:text="${time!=null?time:''}"></span>
+                </div>
+            </div>
+            <div class="card" th:if="${ready}">
+                <h3>加入的群</h3>
+                <div class="card-content" th:if="${ready}">
+                    <table id="group-table" class="beautiful-table-x">
+                        <thead>
+                            <th>群号</th>
+                            <th>名称</th>
+                            <th>操作</th>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="group,stat:${groups}">
+                                <td th:text="${group['id']}"></td>
+                                <td th:text="${group['name']}"></td>
+                                <td><button class="table-btn" onclick="groupInfo(this)">详细</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+
+            <div class="card" sec:authorize="hasAnyAuthority('AUTH_SUPER_ADMIN')">
+                <h3>插件信息</h3>
+                <div class="card-content">
+                    <table class="beautiful-table-x">
+                        <thead>
+                        <th>名称</th>
+                        <th>操作</th>
+                        </thead>
+                        <tbody>
+                            <tr th:each="plugin,stat:${plugins}">
+                                <td th:text="${plugin['name']}"></td>
+                                <td><button class="table-btn">操作</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="content-div fixed-div" th:if="${ready}">
+            <div class="cur-group-name" style="text-align: center;font-size: 25px;">请选择群</div>
+
+            <div class="card">
+                <h3>最新消息</h3>
+                <div class="card-content">
+                    <button onclick="getLastMessage(curGid)" class="confirm-btn">更新</button>
+                    <button onclick="repeat(curGid)" class="confirm-btn">一键复读</button>
+                    <span id="repeat-msg-hash" hidden></span>
+                    <button class="confirm-btn" onclick="recall('repeat-msg-hash')" >撤回</button>
+
+                    <div id="lastMessage">消息查看</div>
+                    <span id="lastMessage-hash" hidden></span>
+                </div>
+            </div>
+
+
+            <div class="card">
+                <h3>文本发送</h3>
+                <div class="card-content">
+                    向<span class="cur-group-name">目标群</span>发送
+                    <br>
+                    <textarea id="send-text-area"></textarea><br>
+                    <button class="confirm-btn" onclick="sendText()">发送</button>
+                    <button class="confirm-btn" onclick="recall('send-text-hash')">撤回</button>
+                    <button class="confirm-btn" onclick="$('#send-text-area').val('')">清空</button>
+                    <span id="send-text-hash" hidden></span>
+                </div>
+            </div>
+
+            <div class="card" id="image-upload-div">
+                <h3>图片上传</h3>
+                <div class="card-content">
+                    <table style="table-layout: fixed;width: 100%">
+                        <tr>
+                            <td valign="top" style="width: 50%">
+                                向<span class="cur-group-name">目标群</span>发送图片
+                                <br><span id="log" >这里显示信息</span>
+                                <div id="image-upload-control-div">
+                                    <input id="upload-input" type="file"  accept="image/pipeg,image/jpeg,image/png,image/gif" onchange="upload_file(this)" hidden/>
+                                    <label for="upload-input" class="confirm-btn">上传文件</label>
+                                    <br><input class="paste-input" type="text" placeholder="在这里右击粘贴" onchange="this.value = ''"><br>
+                                    <label  for="is-r18">r18处理
+                                        <input id="is-r18" type="checkbox" />
+                                    </label><br>
+                                    <button class="confirm-btn" onclick="upload()">上传</button>
+                                    <button class="confirm-btn" onclick="recall('upload-image-hash')">撤回</button>
+
+                                    <span id="upload-image-hash" hidden></span>
+                                </div>
+                            </td>
+                            <td valign="top">
+                                <img src="/img/uploadIMG.png" id="image-preview" alt="图片预览">
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>消息撤回</h3>
+                <div class="card-content">
+                    <table id="message-table" class="scroll-table beautiful-table-x">
+                        <thead>
+
+                        <th>时间</th>
+                        <th>内容</th>
+                        <th>操作</th>
+
+                        </thead>
+                        <tbody id="message-tbody">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Bot信息</h3>
+                <div class="card-content">
+                    当前名片：<span id="cur-name-card">请选择群</span>
+                    <br><input style="margin: 10px 0;" id="new-name-card" placeholder="新的名片">
+                    <button class="confirm-btn" onclick="nameCard(true)">确定</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>群成员</h3>
+                <div class="card-content">
+                        <table id="member-table" class="scroll-table beautiful-table-x">
+                            <thead>
+
+                                <th>头像</th>
+                                <th>id</th>
+                                <th>名片</th>
+                                <th>昵称</th>
+                            </thead>
+                            <tbody id="members-tbody">
+                                <tr>
+                                    <td>头像</td>
+                                    <td>qq</td>
+                                    <td>名片</td>
+                                    <td>昵称</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                </div>
+            </div>
+
+
+        </div>
+
+
+    </div>
+    <script src="/js/upload.js"></script>
+    <script src="/js/card.js"></script>
+
+<script th:inline="javascript">
+    const token = [[${_csrf.token}]]
+    const header = [[${_csrf.headerName}]]
+
+    let curGid = null;
+    let curGName= null;
+
+    function nameCard(change) {
+        if (curGid === null) {
+            return
+        }
+
+        url = "/bot/nameCard?groupID=" + curGid
+        if (change) {
+            let n = $("#new-name-card").val()
+            if (n != null && n.length > 0) {
+                url += "&new=" + n
+            }
+        }
+        $.ajax({
+            url: url,
+            type: "post",
+            dataType: "json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader(header, token)
+            },
+            success: function (data) {
+                if (data.code === 200)
+                    $("#cur-name-card").html(data.msg)
+            }
+        })
+    }
+
+    let o = null
+
+    function sentMessages() {
+        if (curGid === null) return
+        $.ajax({
+            url: "/bot/sentMessages?groupID=" + curGid,
+            type: "post",
+            dataType: "json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader(header, token)
+            },
+            success: function(data) {
+                if (data.code === 200) {
+                    o = data.msg
+                    let tb = $("#message-tbody")
+                    tb.empty()
+                    for (let m of data.msg) {
+                        let ntr = $("<tr>" +
+                            "<td>" + m.time + "</td>" +
+                            "<td>" + m.messageHtml + "</td>" +
+                            "<td><button class='table-btn' onclick='recallSent(this," + m.hash +")'>撤回</button></td>" +
+                            "<td class='hidden-id'>" + m.hash + "</td></tr>")
+                        tb.append(ntr)
+                    }
+                }
+            }
+        })
+    }
+
+    function recallSent(btn, hash) {
+        if (curGid === null) return
+        $.ajax({
+            url:"/bot/recallSent?groupID=" + curGid + "&hash=" + hash,
+            type: "post",
+            dataType: "json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader(header, token)
+            },
+            success: function (data) {
+                alert(data.msg)
+                $(btn.parentNode.parentNode).remove()
+            }
+        })
+    }
+
+    function groupInfo(btn) {
+        let parent = btn.parentNode.parentNode
+        let tds = parent.getElementsByTagName("td")
+        let gid = tds[0].innerHTML
+        curGid = gid
+        curGName = tds[1].innerHTML
+        $(".cur-group-name").html(curGName).attr("title", curGid)
+        $("#send-text-area").val("")
+        getMemberInfo(gid)
+        getLastMessage(gid)
+        nameCard(false)
+
+        sentMessages()
+    }
+
+    function getLastMessage(gid) {
+        if (gid === null) {
+            return
+        }
+
+        $.ajax({
+            url: "/bot/lastMessage?groupID=" + gid,
+            type: "post",
+            dataType: "json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader(header, token)
+            },
+            success:function (resp) {
+                if (resp.code === 200) {
+                    $("#lastMessage").html(resp.msg.html)
+                    $("#lastMessage-hash").html(resp.msg.hash)
+                } else {
+                    document.getElementById("lastMessage").innerHTML = "暂时无法获得！"
+                }
+            }
+        })
+    }
+
+    function repeat(gid) {
+        if (gid === null) {
+            return
+        }
+        let hash = $("#lastMessage-hash").html()
+        if (hash === null || hash.length === 0) {
+            return;
+        }
+
+        $.ajax({
+            url:"/bot/repeat?groupID=" + gid + "&hash=" + hash,
+            type:'POST',
+            dataType:'json',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader(header, token);
+            },
+            success:function(data){
+                console.log(data)
+                if (data.code === 200) {
+                    $("#repeat-msg-hash").html(data.msg)
+                }
+            }
+        });
+
+    }
+
+    function sendText() {
+        if (curGid === null) {
+            return
+        }
+        let thing = $("#send-text-area").val()
+        $.ajax({
+            url: "/bot/sendText?groupID=" + curGid,
+            type: "post",
+            data: thing,
+            contentType: "text/plain",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader(header, token)
+            },
+            success:function(data){
+                if (data.code === 200) {
+                    $("#send-text-hash").html(data.msg)
+                }
+            }
+        })
+    }
+
+    function recall(id) {
+        hash = document.getElementById(id).innerHTML
+        if (hash === null || hash.length === 0)
+            return
+        $.ajax({
+            url: "/bot/recall?hash=" + hash,
+            type: 'POST',
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader(header, token)
+            }
+        })
+    }
+
+    function getMemberInfo(gid) {
+        let xhr = new XMLHttpRequest()
+        xhr.open("get", "/bot/getMembers?groupID=" + gid)
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                let json = JSON.parse(xhr.responseText)
+                if (json.code === 200) {
+                    let members = json.msg
+                    let r = ""
+                    for (let m of members) {
+                        if (m.permission === "OWNER") {
+                            r += "<tr style='color: red'>"
+                        } else if (m.permission === "ADMINISTRATOR") {
+                            r += "<tr style='color: blue'>"
+                        } else {
+                            r += "<tr>"
+                        }
+                        r += "<td><img class='avatar-img' src=\"" + m.avatarUrl + "\"></td>"
+                        r += "<td>" + m.id + "</td>"
+                        r += "<td>" + m.nameCard + "</td>"
+                        r += "<td>" + m.nick + "</td>"
+                        r += "</tr>"
+                    }
+                    document.getElementById("members-tbody").innerHTML = r
+                }
+            }
+        }
+        xhr.send()
+    }
+
+</script>
+</body>
+</html>

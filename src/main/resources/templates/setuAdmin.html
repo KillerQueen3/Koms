@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>色图管理</title>
+    <link rel="stylesheet" type="text/css" href="/css/header.css">
+    <link rel="stylesheet" type="text/css" href="/css/card.css">
+    <link rel="stylesheet" type="text/css" href="/css/commonality.css">
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <style type="text/css">
+        table.beautiful-table thead {
+            color: white;
+            background-color: #38F;
+        }
+
+        table.beautiful-table tbody tr:nth-of-type(odd) {
+            background: #EEE;
+        }
+
+        table.beautiful-table tbody tr:nth-of-type(even) {
+            background: #FFF;
+        }
+
+        table.beautiful-table {
+            margin: 5px 0;
+            table-layout: fixed;
+            width: 100%;
+            text-align: center;
+            border-collapse: collapse;
+        }
+
+        .beautiful-table th,.beautiful-table td {
+            border-right: 1px solid white;
+        }
+
+        table.beautiful-table th, table.beautiful-table td {
+            padding: 5px;
+        }
+
+
+        #key-mapping-table thead th:nth-child(1) {
+            width: 20%;
+        }
+
+        #key-mapping-table thead th:nth-child(2) {
+            width: 70%;
+        }
+
+        #key-mapping-table thead th:nth-child(3) {
+            width: 10%;
+        }
+
+
+        dialog {
+            position: absolute;
+            margin: 0;
+            left: calc(50% - 175px);
+            top: 30%;
+            text-align:center;
+            width: 350px;
+            border-radius: 4px;
+            line-height: 200%;
+            border: none;
+            box-shadow: 0 0 15px lightgray;
+        }
+
+        #loading-dlg {
+            top: 40%;
+            font-size: 30px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            border: none;
+            background: white;
+        }
+
+        #edit-dlg textarea {
+            width: 340px;
+            height: 150px;
+            resize: none;
+        }
+
+
+
+
+        .jumping-spans span {
+            position: relative;
+            display: inline-block;
+            animation: span-jump 2s infinite ease-in-out;
+            animation-delay: calc(0.1s * var(--i));
+        }
+
+        @keyframes span-jump {
+            0%,50%,100% {
+                transform: translateY(0);
+            }
+
+            20% {
+                transform: translateY(-30px);
+            }
+
+        }
+
+        #check-tags table a {
+            text-decoration: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div th:replace="~{commonality/header::topbar}"></div>
+    <div class="body-div">
+        <div class="left-div fixed-div">
+            <div style="font-size: 30px;text-align: center"><b>工具栏</b></div>
+            <div class="card" id="check-tags">
+                <h3>tag检查工具</h3>
+                <div class="card-content">
+                <label for="mappings"></label><input type="text" id="mappings">
+                <button class="input-btn" onclick="checkMaps()">检查</button>
+                    <button onclick="$('#mappings').val('')">清空</button>
+                <table class="beautiful-table" id="check-result">
+                    <thead>
+                    <th>tag</th>
+                    <th>翻译</th>
+                    <th>数量</th>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <div class="card" th:if="${ready}">
+                <h3>群号速查</h3>
+                <div class="card-content">
+                    <table class="beautiful-table">
+                        <thead>
+                            <th>群号</th>
+                            <th>群名</th>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="group,stat:${groups}">
+                                <td th:text="${group['id']}"></td>
+                                <td th:text="${group['name']}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>作者速查</h3>
+                <div class="card-content">
+                    <input id="check-uid" placeholder="请输入uid"> <button onclick="artistInfo()">搜索</button>
+                    <div>
+                        <span id="check-uid-author-name">作者名</span><br>
+                        <a target="_blank" href="/pixiv" style="text-decoration: none;color: black" id="check-uid-url">作品查看</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="content-div fixed-div">
+            <div class="card">
+                <h3>色图映射</h3>
+                <div class="card-content">
+                    <div>
+                        <table id="key-mapping-table" class="beautiful-table">
+                            <thead>
+                            <th title="机器人使用String.match方法匹配">入口<a target="_blank" style="text-decoration: none;color: white;" href="https://www.runoob.com/regexp/regexp-syntax.html">正则</a><sup title="捕获消息'来点..'中'..'符合的正则表达式">?</sup></th>
+                            <th title="使用[,;]隔开多个标签">映射<sup title="机器人将随机从标签中选一个进行搜索">?</sup></th>
+                            <th>操作</th>
+                            </thead>
+                            <tbody>
+                            <tr th:each="mapping,stat:${tagList}">
+                                <td th:text="${mapping['regex']}"></td>
+                                <td th:text="${mapping['tags']}"></td>
+                                <td><button class="table-btn" onclick="edit(this)">编辑</button></td>
+                                <td class="hidden-id" th:text="${mapping['id']}"></td>
+                            </tr>
+                            <tr>
+                                <td><input style="width: 80%" id="new-key" type="text" placeholder="新键值"></td>
+                                <td><input style="width: 90%" id="new-mappings" type="text" placeholder="新映射值"></td>
+                                <td><button class="table-btn" onclick="submitNew()">添加</button></td>
+                            </tr>
+                            </tbody>
+
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card">
+                <h3>作者订阅</h3>
+                <div class="card-content">
+                    <table style="width: 100%;table-layout: fixed">
+                        <tr>
+                            <td valign="top" style="width:50%">
+
+                                <table id="group-subscribe-table"  class="beautiful-table">
+                                    <thead>
+                                    <th>群号</th>
+                                    <th>订阅数</th>
+                                    <th>操作</th>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="map: ${subMap}">
+                                        <td th:text="${map.key}"></td>
+                                        <td th:text="${map.value.size()}"></td>
+                                        <td><button class="table-btn" th:onclick="showSubscribes([[${map.key}]])">详情</button> </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" style="width: 90%" placeholder="新订阅-群号" id="new-sub-gid-1"></td>
+                                        <td><input type="text" style="width: 90%" placeholder="新订阅-作者id" id="new-sub-uid-1"></td>
+                                        <td><button class="table-btn" onclick="newSubscribe2()">新的订阅</button> </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                            <td valign="top" style="width: 30%;padding-left: 5%">
+                                <table class="beautiful-table" id="group-subscribe-info-table">
+                                    <thead>
+                                        <th>作者id</th>
+                                        <th>操作</th>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td colspan="2">请选择群</td>
+                                    </tr>
+
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+
+
+                </div>
+            </div>
+
+        </div>
+
+
+        <dialog id="edit-dlg">
+            <button class="close-btn" onclick="closeDialog()">x</button>
+            <form autocomplete="off" style="display: inline" id="edit-form" method="post" th:action="@{/bot/setu/edit}" onsubmit="return submitEdit()">
+                <input name="id" class="hidden-id" id="edit-id">
+                编辑<br>
+                <label>
+                    <input style="width: 338px;" name="key" type="text" id="edit-key">
+                </label> <br>
+                <textarea id="edit-mapping" form="edit-form" name="mapping"></textarea>
+                <input type="submit" name="submit">
+            </form>
+            <button onclick="deleteMapping()">删除</button>
+        </dialog>
+
+        <dialog id="loading-dlg">
+            <div class="jumping-spans">
+                <span style="--i:1;">请</span>
+                <span style="--i:2;">稍</span>
+                <span style="--i:3;">候</span>
+                <span style="--i:4;">。</span>
+                <span style="--i:5;">。</span>
+                <span style="--i:6;">。</span>
+            </div>
+        </dialog>
+    </div>
+
+    <script src="/js/card.js"></script>
+<script th:inline="javascript">
+    let subMap = [[${subMap}]]
+
+    const token = [[${_csrf.token}]]
+    const header = [[${_csrf.headerName}]]
+
+    function loading() {
+        document.getElementById("loading-dlg").showModal()
+    }
+
+    function endLoading() {
+        document.getElementById("loading-dlg").close()
+    }
+
+    function artistInfo() {
+        let uid = $("#check-uid").val()
+        if (uid === null|| uid.length === 0)
+            return
+        $.ajax({
+            url: "/setu/artistInfo?uid=" + uid,
+            type: "get",
+            dataType: "json",
+            success : function (data) {
+                if (data.code !== 200) {
+                    alert(data.msg)
+                } else {
+                    $("#check-uid-author-name").html(data.msg)
+                    $("#check-uid-url").attr("href", "/pixiv?type=uid&thing=" + uid)
+                }
+            }
+        })
+    }
+
+    function showSubscribes(gid) {
+        let body = $("#group-subscribe-info-table tbody")
+        body.empty()
+        for (const uid of subMap[gid]) {
+            body.append($("<tr><td>" + uid + "</td><td><button class='table-btn'" +
+                " onclick='deleteSubscribe("+ gid + "," + uid + ")'>" +
+                "删除</button></td></tr>"))
+        }
+        body.append($("<tr><td><input placeholder='请输入画师uid' style='width: 80%' type='text' id='new-sub-uid'></td>" +
+            "<td><button onclick='newSubscribe(" + gid + "," + $("#new-sub-uid").val() + ")' class='table-btn'>新的订阅</button></td></tr>"))
+    }
+
+    function deleteSubscribe(gid, uid) {
+        if (gid.length === 0 || uid.length === 0)
+            return;
+        if (!confirm("真的要删除吗？")) {
+            return
+        }
+        console.log("/setu/deleteSub?groupID=" + gid + "&uid=" + uid)
+        $.ajax({
+            url: "/setu/deleteSub?groupID=" + gid + "&uid=" + uid,
+            type: "post",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader(header, token);
+                loading()
+            },
+            success : function (data) {
+                endLoading()
+                if (data.code !== 200) {
+                    alert(data.msg)
+                } else {
+                    alert("成功！请刷新网页查看结果！")
+                }
+            }
+        })
+    }
+
+    function newSubscribe2() {
+        let gid = $("#new-sub-gid-1").val()
+        if (gid === null || gid.length === 0)
+            return
+        let uid = $("#new-sub-uid-1").val()
+        newSubscribe(gid, uid)
+    }
+
+    function newSubscribe(gid, uid) {
+        if (uid === undefined||uid===null) {
+            alert("输入错误！")
+            return
+        }
+        $.ajax({
+            url:"/setu/newSub?uid=" + uid + "&groupID=" + gid,
+            type: "post",
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader(header, token);
+                loading()
+            },
+            success : function (data) {
+                endLoading()
+                if (data.code !== 200) {
+                    alert(data.msg)
+                } else {
+                    alert("成功！请刷新网页查看结果！")
+                }
+            }
+        })
+    }
+
+    function deleteMapping() {
+        let xhr = new  XMLHttpRequest()
+        xhr.open("post", "/setu/delete?id=" + $("#edit-id").val())
+        xhr.setRequestHeader(header, token)
+        if (confirm("真的要删除" + $("#edit-key").val() + "吗？")) {
+            xhr.send()
+            location.reload()
+        }
+    }
+
+    function URLEncode(sStr)
+    {
+        return sStr.replace(/\+/g, '%2B').replace(/"/g,'%22').replace(/'/g, '%27').replace(/\//g,'%2F');
+    }
+
+    function submitEdit() {
+        $("#edit-key").val(function (i, ori) {
+            return URLEncode(ori)
+        })
+        $.ajax(
+            {
+                url : "/setu/edit",
+                type : "POST",
+                data : $( '#edit-form').serialize(),
+                error : function(data) {
+                    console.warn(data);
+                },
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader(header, token);
+                    loading()
+                },
+                success : function (data) {
+                    endLoading()
+                    if (data.code !== 200) {
+                        alert(data.msg)
+                    } else {
+                        alert("成功！过滤掉的标签："  + data.msg.toString())
+                        location.reload()
+                    }
+                }
+            }
+        )
+        return false
+    }
+
+    function submitNew() {
+        let key = $("#new-key").val()
+        let map = $("#new-mappings").val()
+        $.ajax(
+            {
+                url : "/setu/new?key=" + URLEncode(key) + "&mapping=" + map,
+                type : "POST",
+                error : function(data) {
+                    console.warn(data);
+                },
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader(header, token);
+                    loading()
+                },
+                success : function (data) {
+                    endLoading()
+                    if (data.code !== 200) {
+                        alert(data.msg)
+                    } else {
+                        alert("成功！过滤掉的标签："  + data.msg.toString())
+                        location.reload()
+                    }
+                }
+
+            }
+        )
+    }
+
+    function closeDialog() {
+        document.getElementById("edit-dlg").close()
+    }
+
+
+    function edit(btn) {
+        let parent = btn.parentNode.parentNode
+        let tds = parent.getElementsByTagName("td")
+        let key = tds[0].innerHTML
+        let mapping = tds[1].innerHTML
+        let id = tds[3].innerHTML
+        document.getElementById("edit-dlg").show()
+        $("#edit-id").val(id)
+        $("#edit-key").val(key)
+        $("#edit-mapping").val(mapping)
+
+    }
+
+    function checkMaps() {
+        let tags = $("#mappings").val()
+        if (tags.length === 0) {
+            alert("请输入tag！")
+        }
+        let xhr = new XMLHttpRequest()
+        xhr.open("get", "/setu/check?tags=" + tags)
+        xhr.onload = function () {
+            let json = JSON.parse(xhr.responseText)
+            let t = document.getElementById("check-result").getElementsByTagName("tbody")[0]
+            let r = ""
+            for (let report of json) {
+                r += "<tr>"
+                r += "<td><a href='/pixiv?type=search&thing=" + report.tag + "' target='_blank'>" + report.tag + "</a></td>"
+                r += "<td>" + report.trans + "</td>"
+                r += "<td>" + report.num + "</td>"
+                r += "</tr>"
+            }
+            t.innerHTML = r
+        }
+        xhr.send()
+    }
+</script>
+</body>
+</html>

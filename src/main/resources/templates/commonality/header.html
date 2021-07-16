@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>顶部导航</title>
+    <style type="text/css">
+        .auth-info {
+            display: inline;
+        }
+
+        .topNavi ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .navi {
+            color: black;
+            display: block;
+            text-align: center;
+            padding: 9px 12px;
+            text-decoration: none;
+        }
+
+        .topNavi li {
+            float: left;
+        }
+
+        .topNavi li a {
+            transition: background-color 1s;
+        }
+
+        .topNavi li a:hover:not(.login) {
+            -webkit-animation: rainbow 7s infinite;
+            animation: rainbow 7s infinite;
+            background-color: #d7d9ff;
+
+            border-bottom: #0aff1f 3px solid;
+        }
+
+        .topNavi ul li ul {
+            width: auto;
+            background: #23e6ff;
+            position: absolute;
+            display: none;
+        }
+
+        .topNavi ul li ul li {
+            margin-right: 0;
+            float: none;
+            text-align: center;
+        }
+
+        .topNavi ul li:hover ul {
+            display: block;
+        }
+
+        .topNavi {
+            opacity: 0.7;
+            position: absolute;
+            padding: 0;
+            margin: 0;
+            top: 0;
+            left: 0;
+            height: auto;
+            width: 100%;
+            z-index: 999;
+            background-image: linear-gradient(to right, ghostwhite, #e0f1ff);
+            border-bottom: 1px solid #e0f1ff;
+        }
+
+        .body-div {
+            padding-top: 35px;
+        }
+
+        .header-ico {
+            width: 20px;
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 10px;
+            -webkit-transition: width 0.5s, padding-top 0.5s, transform 3s;
+        }
+
+        .header-ico:hover {
+            padding-top: 5px;
+            width: 28px;
+            transform: rotateY(180deg);
+        }
+
+        @-webkit-keyframes rainbow {
+            0%, 100% {
+                color: red;
+            }
+            16% {
+                color: orange;
+            }
+            32% {
+                color: yellow;
+            }
+            48% {
+                color: green;
+            }
+            64% {
+                color: blue;
+            }
+            80% {
+                color: purple;
+            }
+        }
+
+        @keyframes rainbow {
+            0%, 100% {
+                color: red;
+            }
+            16% {
+                color: orange;
+            }
+            32% {
+                color: yellow;
+            }
+            48% {
+                color: green;
+            }
+            64% {
+                color: blue;
+            }
+            80% {
+                color: purple;
+            }
+        }
+
+        #login-submit {
+            border: none;
+            background: none;
+            alignment: center;
+            text-align: center;
+            font-size: 15px;
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="topNavi" id="topID" th:fragment="topbar">
+    <ul>
+        <li><img alt="koms" class="header-ico" title="请使用桌面版Chrome访问哦" src="/img/ico.png"></li>
+        <li><a class="navi" href="/">主页</a>
+            <ul>
+                <li><a class="navi" href="/fish">鱼</a></li>
+            </ul>
+        </li>
+        <li>
+        <a class="navi" href="/pixiv">pixiv</a></li>
+        <li sec:authorize="hasAnyAuthority('AUTH_ADMIN', 'AUTH_SUPER_ADMIN')"><a class="navi" href="/bot">bot</a>
+            <ul>
+                <li sec:authorize="hasAnyAuthority('AUTH_SUPER_ADMIN')"><a class="navi" href="/setu">色图管理</a></li>
+            </ul>
+        </li>
+        <li class="navi" style="float: right">
+            <span class="auth-info" sec:authorize="isAuthenticated()">
+                欢迎，<span th:text="${user?.name}"></span>&nbsp;&nbsp;
+                <form style="display: inline" action="/logout" method="post">
+                    <input type="hidden" name="${_csrf.parameterName }" value="${_csrf.token }"/>
+                    <input id="login-submit" type="submit" value="退出登录">
+                </form>
+
+            </span>
+            <span class="auth-info" sec:authorize="!isAuthenticated()">
+                您尚未登录，请 <a class="login" href="/login">登录</a>
+            </span>
+        </li>
+    </ul>
+</nav>
+
+<div class="body-div">
+    123
+</div>
+</body>
+</html>

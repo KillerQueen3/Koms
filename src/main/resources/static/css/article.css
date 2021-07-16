@@ -1,0 +1,45 @@
+.cmd {
+    font-weight: bold;
+    margin: 0 5px;
+}
+
+.admin {
+    color: blue;
+}
+
+.owner {
+    color: red;
+}
+
+.super-admin {
+    color: purple;
+}
+
+.friend {
+    color: yellow;
+}
+
+.hidden-text {
+    background: black;
+}
+
+.hidden-text:hover {
+    background: none;
+}
+
+.article-div {
+    border: 1px cadetblue solid;
+    border-radius:10px;
+    box-shadow: 0 0 10px cadetblue;
+    margin: 10px 15px;
+    background: white;
+    opacity: 0.8;
+}
+
+.article-div img {
+    max-width: 100%;
+}
+
+body {
+    background-image: url("/img/fishnets-and-hearts.png");
+}

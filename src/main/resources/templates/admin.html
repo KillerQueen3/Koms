@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh"  xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>KOMS-管理员</title>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/header.css">
+    <style>
+        .side-nav {
+            width: 200px;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-x: hidden;
+            background-color: #c6fff7;
+            border-right: gray solid 1px;
+        }
+
+        .nav-top {
+            border-bottom: 2px solid #ccc;
+            font:  30px/2 sans-serif;
+
+        }
+
+        .side-nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .side-nav li {
+
+            overflow: auto;
+        }
+
+        .l-content {
+            text-decoration: none;
+            cursor: pointer;
+            padding-left: 20px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .l-content:hover {
+            background-color: #3bff9b;
+        }
+
+        .l-top {
+            font: 200 20px/1.5 Helvetica, Verdana, sans-serif;
+            line-height: 200%;
+            padding-left: 10px;
+        }
+
+        .main-div {
+            padding-left: 200px;
+
+        }
+
+
+    </style>
+</head>
+<body>
+    <div th:replace="~{commonality/header::topbar}"></div>
+    <div class="body-div" sec:authentication="hasAnyAuthority('AUTH_ADMIN')">
+        <div class="side-nav" id="side-nav-id">
+            <div class="nav-top">管理员菜单</div>
+            <ul>
+                <li>
+                    <div class="l-top l-content" onclick="showDiv('user-admin')">用户管理</div>
+                </li>
+                <li>
+                    <div class="l-top l-content" onclick="showDiv('bg-admin')">主页背景图管理</div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main-div">
+            <div class="main-content" id="user-admin">
+                <div class="main-content-title">用户管理</div>
+            </div>
+
+            <div class="main-content" id="bg-admin" hidden>
+                <div class="main-content-title">主页背景管理</div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const token = [[${_csrf.token}]]
+        const header = [[${_csrf.headerName}]]
+        const divs = document.getElementsByClassName("main-content")
+
+        function showDiv(id) {
+            for (let d of divs) {
+                d.hidden = true
+            }
+            document.getElementById(id).hidden = false
+        }
+    </script>
+</body>
+</html>

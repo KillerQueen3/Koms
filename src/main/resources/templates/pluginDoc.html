@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh"  xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="referrer" content="never">
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+  <title>[[${title}]]</title>
+
+  <link rel="stylesheet" type="text/css" href="/css/header.css">
+  <link rel="stylesheet" type="text/css" href="/css/commonality.css">
+  <link rel="stylesheet" type="text/css" href="/css/article.css">
+
+</head>
+<body>
+<div th:replace="~{commonality/header::topbar}"></div>
+
+<div class="body-div">
+  <div class="article-div">
+    <h1 style="text-align: center" th:utext="${title}">标题</h1>
+    <hr style="width: 90%">
+    <div th:utext="${html}" style="margin: 15px 5% 15px 5%">
+      正文
+    </div>
+  </div>
+</div>
+</body>
+</html>

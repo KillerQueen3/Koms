@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh"  xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>主页-KOMS</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/header.css">
+    <style>
+        html {
+            height: 100%;
+        }
+        body {
+            background-size: 100% auto;
+            background-repeat: no-repeat;
+            -webkit-animation-name: back-frame;
+            -webkit-animation-duration: 30s;
+            -webkit-animation-iteration-count: infinite;
+            -webkit-animation-direction: alternate;
+
+            animation-name: back-frame;
+            animation-duration: 30s;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
+        }
+
+        @-webkit-keyframes back-frame {
+            0% {
+                background-position: top;
+                background-image: url("/background/randomImage?group=1");
+            }
+            20% {
+                background-position:bottom;
+            }
+            40% {
+                background-image: url("/background/randomImage?group=2");
+            }
+            60% {
+                background-position: top;
+            }
+
+            80% {
+                background-image: url("/background/randomImage?group=3");
+            }
+            90% {
+                background-position:bottom;
+            }
+            100% {
+                background-image: url("/background/randomImage?group=4");
+            }
+        }
+
+        @-webkit-keyframes h-frame {
+            0% {
+                background-position: top;
+                background-image: url("/background/randomImage?group=1&h=true");
+            }
+            20% {
+                background-position:bottom;
+            }
+            40% {
+                background-image: url("/background/randomImage?group=2&h=true");
+            }
+            60% {
+                background-position: top;
+            }
+
+            80% {
+                background-image: url("/background/randomImage?group=3&h=true");
+            }
+            90% {
+                background-position:bottom;
+            }
+            100% {
+                background-image: url("/background/randomImage?group=4&h=true");
+            }
+        }
+
+        @keyframes back-frame {
+            0% {
+                background-position: top;
+                background-image: url("/background/randomImage?group=1");
+            }
+            20% {
+                background-position:bottom;
+            }
+            40% {
+                background-image: url("/background/randomImage?group=2");
+            }
+            60% {
+                background-position: top;
+            }
+
+            80% {
+                background-image: url("/background/randomImage?group=3");
+            }
+            90% {
+                background-position:bottom;
+            }
+            100% {
+                background-image: url("/background/randomImage?group=4");
+            }
+        }
+
+        @keyframes h-frame {
+            0% {
+                background-position: top;
+                background-image: url("/background/randomImage?group=1&h=true");
+            }
+            20% {
+                background-position:bottom;
+            }
+            40% {
+                background-image: url("/background/randomImage?group=2&h=true");
+            }
+            60% {
+                background-position: top;
+            }
+
+            80% {
+                background-image: url("/background/randomImage?group=3&h=true");
+            }
+            90% {
+                background-position:bottom;
+            }
+            100% {
+                background-image: url("/background/randomImage?group=4&h=true");
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div th:replace="~{commonality/header::topbar}"></div>
+    <div class="body-div" onclick="change()">
+        如你所见，这里什么也没有
+    </div>
+    <script th:inline="javascript">
+        let h = false
+        function change() {
+            let obj = document.getElementsByTagName("body")[0]
+            if (!h) {
+                obj.style.cssText = "-webkit-animation-name: h-frame;animation-name: h-frame;"
+            } else {
+                obj.style.cssText = "-webkit-animation-name: back-frame;animation-name: back-frame;"
+            }
+            h = !h
+        }
+    </script>
+</body>
+</html>

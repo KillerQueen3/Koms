@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh"  xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="never">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>[[${article.title}]]</title>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/header.css">
+    <link rel="stylesheet" type="text/css" href="/css/commonality.css">
+    <link rel="stylesheet" type="text/css" href="/css/article.css">
+    <link rel="stylesheet" type="text/css" href="/css/hljs/github.css">
+    <script src="/js/highlight.pack.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+<div th:replace="~{commonality/header::topbar}"></div>
+
+<div class="body-div">
+    <div class="article-div">
+        <span id="article-id" th:text="${article.id}" hidden></span>
+        <h1 style="text-align: center" th:utext="${article.title}">标题</h1>
+        <hr style="width: 90%">
+        <div style="text-align: center;color: gray;font-size: small">
+            作者：<span th:text="${article.author}">作者</span>&nbsp;&nbsp;创建时间：<span  th:text="${#dates.format(article.createTime, 'yyyy-MM-dd HH:mm:ss')}">时间</span>&nbsp;&nbsp;最后编辑于：<span th:text="${#dates.format(article.lastEditTime, 'yyyy-MM-dd HH:mm:ss')}">编辑于</span>
+        </div>
+        <div th:utext="${article.html}" style="margin: 15px 5% 15px 5%">
+            正文
+        </div>
+    </div>
+    <div th:if="${hasAuth}" style="text-align: center" class="admin-div">
+        <button class="confirm-btn" onclick="toEdit()">编辑</button>
+        <button class="confirm-btn" th:onclick="deleteA([[${article.id}]])">删除</button>
+        <button class="confirm-btn" onclick="toNew()">新的</button>
+    </div>
+</div>
+<script th:inline="javascript">
+
+    const token = [[${_csrf.token}]]
+    const header = [[${_csrf.headerName}]]
+
+    function toEdit() {
+        window.location.href = "/article/edit/" + $("#article-id").text()
+    }
+
+    function toNew() {
+        window.location.href = "/article/new"
+    }
+
+    function deleteA(id) {
+        if (confirm("真的要删除吗？")) {
+            $.ajax({
+                url: "/article/edit/delete?id=" + id,
+                type: "POST",
+
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader(header, token)
+                },
+                error: function(error) {
+                    alert(error.responseJSON.msg)
+                },
+                success: function() {
+                    alert("成功！")
+                }
+            })
+        }
+    }
+</script>
+</body>
+</html>
